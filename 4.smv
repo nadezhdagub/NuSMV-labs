@@ -1,0 +1,410 @@
+MODULE Task(activate, start, preempt)                 																								  
+VAR 
+	state: { Running, Ready, Suspended };            
+	terminate: boolean;								  
+	priority: 0..3;									
+	terminate_counter: 0..2;						
+
+ASSIGN
+	init(state) := Suspended;						
+	next(state) :=
+		case
+			state = Suspended & next(activate) = TRUE: Ready;       
+			state = Ready & next(start) = TRUE: Running;			
+			state = Running & next(terminate) = TRUE: Suspended;   
+			state = Running & next(preempt) = TRUE: Ready;			
+			TRUE: state;
+		esac;
+
+	init(terminate_counter) := 2;                         
+	next(terminate_counter) := 
+			case
+				next(state) = Running & terminate_counter >= 1: terminate_counter - 1;   
+				next(state) = Suspended : 2;                  
+				TRUE: terminate_counter;
+			esac;
+
+	init(terminate) := FALSE;
+	next(terminate) := case
+							state = Running & terminate_counter = 0: TRUE;          
+							TRUE: FALSE;
+					   esac;
+
+	init(priority) := 0;
+	next(priority) := case
+						next(activate) & priority < 3: priority + 1;             
+						next(activate) & priority = 3: 0;						
+						TRUE: priority;
+					  esac;
+	
+-----------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
+MODULE ExtendedTask(activate, start, preempt, wait, release)          																	
+VAR
+	state: { Running, Ready, Suspended, Waiting };					
+	terminate: boolean;
+	priority: 0..3;
+
+ASSIGN
+	init(state) := Suspended;
+	next(state) :=
+		case
+			state = Suspended & next(activate) = TRUE:  Ready;         
+			state = Ready & next(start) = TRUE: Running;
+			state = Running & next(terminate) = TRUE: Suspended;
+			state = Running & next(preempt) = TRUE: Ready;
+			state = Running & next(wait) = TRUE: Waiting;           
+			state = Waiting & next(release) = TRUE: Ready;         	
+
+			TRUE: state;
+		esac;
+
+	init(terminate) := FALSE;
+	next(terminate) := case
+							state = Running : TRUE;
+							TRUE: FALSE;
+					   esac;
+
+	init(priority) := 0;
+	next(priority) := case
+						next(activate) & priority < 3: priority + 1;
+						next(activate) & priority = 3: 0;
+						TRUE: priority;
+					  esac;
+
+-----------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
+MODULE Queue(prior, start, T1, T2, T3, T4)														
+VAR 
+	queue: array 0..2 of -1..4;                                                               
+
+ASSIGN
+	init(queue[0]) := -1;                                                         
+	next(queue[0]) := 
+	  case
+		queue[0] = -1 : --- empty, queue is empty                                    
+				next(T1.state) = Ready & (next(T1.priority) = prior) ? 1 :           
+				next(T2.state) = Ready & (next(T2.priority) = prior) ? 2 :
+				next(T3.state) = Ready & (next(T3.priority) = prior) ? 3 :
+				next(T4.state) = Ready & (next(T4.priority) = prior) ? 4 :
+				queue[0]; --- take new task or save old state                       
+		queue[0] != -1 : --- taken                                                       
+			case --- state depends on task state, & (...) = (next(Ti.state) = Running)    
+			    
+				queue[0] = 1 & (next(start[1])): queue[1]; --- i is Ti number              
+				queue[0] = 2 & (next(start[2])): queue[1];                                   
+				queue[0] = 3 & (next(start[3])): queue[1];
+				queue[0] = 4 & (next(start[4])): queue[1];
+				TRUE: queue[0]; --- ... or save state                                  
+			esac;
+	  esac;
+
+	init(queue[1]) := -1;                                                              
+	next(queue[1]) :=
+		case
+			queue[0] = -1 : --- empty, queue is empty                                        
+				case
+				  next(queue[0]) = -1 : queue[1]; --- save state, empty queue                         
+				  next(queue[0]) != -1 : 															
+			  			(next(T1.state) = Ready) & (next(T1.priority) = prior) & (next(queue[0]) != 1) ? 1 :    
+						(next(T2.state) = Ready) & (next(T2.priority) = prior) & (next(queue[0]) != 2) ? 2 :
+						(next(T3.state) = Ready) & (next(T3.priority) = prior) & (next(queue[0]) != 3) ? 3 :
+						(next(T4.state) = Ready) & (next(T4.priority) = prior) & (next(queue[0]) != 4) ? 4 :
+						queue[1]; --- take new task or save old state
+								  --- queue is filling       
+				esac;
+			queue[0] != -1 : --- taken                                           
+				case
+				  next(queue[0]) = -1 : --- empty, so queue[1] now is empty          
+				  		queue[1]; --- save state, cause q. will be empty
+				  next(queue[0]) != -1 : --- taken
+					case
+						queue[0] = next(queue[0]) : --- no tasks changed state to Running          
+							case
+								queue[1] = -1 :                                                                          
+									(next(T1.state) = Ready) &(next(T1.priority) = prior) &(next(queue[0]) != 1) ? 1 :   
+									(next(T2.state) = Ready) &(next(T2.priority) = prior) &(next(queue[0]) != 2) ? 2 :
+									(next(T3.state) = Ready) &(next(T3.priority) = prior) &(next(queue[0]) != 3) ? 3 :
+									(next(T4.state) = Ready) &(next(T4.priority) = prior) &(next(queue[0]) != 4) ? 4 :
+									queue[1]; --- take new tasks or save old state
+								queue[1] != -1 : queue[1]; --- save state
+							esac;
+						queue[0] != next(queue[0]) : --- q. moved to head        
+					  		queue[2];
+					esac;
+				esac;
+		esac;
+
+	init(queue[2]) := -1;
+	next(queue[2]) :=
+		case
+		  queue[0] = -1 : --- empty, queue is empty
+		  	case
+				next(queue[0]) = -1 : queue[2]; --- save state, empty queue
+				next(queue[0]) != -1 : 
+					case
+					  next(queue[1]) != -1 :
+		  				(next(T1.state) = Ready)&(next(T1.priority) = prior) &(next(queue[0]) != 1) &(next(queue[1]) != 1) ? 1 :
+						(next(T2.state) = Ready)&(next(T2.priority) = prior) &(next(queue[0]) != 2) &(next(queue[1]) != 2) ? 2 :
+						(next(T3.state) = Ready)&(next(T3.priority) = prior) &(next(queue[0]) != 3) &(next(queue[1]) != 3) ? 3 :
+						(next(T4.state) = Ready)&(next(T4.priority) = prior) &(next(queue[0]) != 4) &(next(queue[1]) != 4) ? 4 :
+						queue[2]; --- take new task or save old state
+					  TRUE : queue[2]; --- save state, no tasks to fill places 1 and 2
+					esac;
+			esac;
+		  queue[0] != -1 : --- taken
+		  	case
+			  next(queue[0]) = -1 : --- empty, so queue[1] & queue[2] now are empty
+			  		queue[2]; --- save state, cause q. will be empty
+			  next(queue[0]) != -1 : --- taken
+				case
+					queue[0] = next(queue[0]) : --- no tasks changed state to Running
+						case
+							queue[1] = -1 : queue[2]; --- save state
+							queue[1] != -1 : 
+								case
+								  queue[2] = -1 :
+				  					(next(T1.state) = Ready) &(next(T1.priority) = prior) &(queue[0] != 1) &(queue[1] != 1) ? 1 :
+									(next(T2.state) = Ready) &(next(T2.priority) = prior) &(queue[0] != 2) &(queue[1] != 2) ? 2 :
+									(next(T3.state) = Ready) &(next(T3.priority) = prior) &(queue[0] != 3) &(queue[1] != 3) ? 3 :
+									(next(T4.state) = Ready) &(next(T4.priority) = prior) &(queue[0] != 4) &(queue[1] != 4) ? 4 :
+									queue[2]; --- take new tasks or save old state
+								  queue[2] != -1 : queue[2]; --- save state, queue is full
+								esac;
+						esac;
+					queue[0] != next(queue[0]) : --- q. moved to head
+			  		  case
+						next(queue[1]) = -1 : -1; --- only 1 task will be in queue
+						next(queue[1]) != -1 : 
+			  				(next(T1.state) = Ready) &(next(T1.priority) = prior) &(next(queue[0]) != 1) &(next(queue[1]) != 1) ? 1 :
+							(next(T2.state) = Ready) &(next(T2.priority) = prior) &(next(queue[0]) != 2) &(next(queue[1]) != 2) ? 2 :
+							(next(T3.state) = Ready) &(next(T3.priority) = prior) &(next(queue[0]) != 3) &(next(queue[1]) != 3) ? 3 :
+							(next(T4.state) = Ready) &(next(T4.priority) = prior) &(next(queue[0]) != 4) &(next(queue[1]) != 4) ? 4 :
+							-1; --- set pl. as empty, 2 tasks will be in q. & no task for place 2
+					  esac;
+				esac;
+			esac;
+		esac;
+
+-----------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
+MODULE Scheduler(count_ready, N)                                                     
+DEFINE
+	has_preempt := preempt[1] | preempt[2] | preempt[3] | preempt[4];                
+	has_release := release[3] | release[4];                                          
+VAR
+	T1: Task(activate[1], start[1], preempt[1]);
+	T2: Task(activate[2], start[2], preempt[2]);
+	T3: ExtendedTask(activate[3], start[3], preempt[3], wait[3], release[3]);
+	T4: ExtendedTask(activate[4], start[4], preempt[4], wait[4], release[4]);
+
+	taskOnProc: -1..4;                                      
+	taskOnProc_prior: -1..3;                                  
+	
+	q0pr: Queue(0, start, T1, T2, T3, T4);               
+	q1pr: Queue(1, start, T1, T2, T3, T4);
+	q2pr: Queue(2, start, T1, T2, T3, T4);
+	q3pr: Queue(3, start, T1, T2, T3, T4);
+	chosenQueue: -1..3; -- queue to take task                
+	
+	activating_order: -1..4;                                  
+	activate: array 1..4 of boolean;               
+	start: array 1..4 of boolean;                  
+	preempt: array 1..4 of boolean;                
+
+	wait: array 3..4 of boolean;                   
+	release: array 3..4 of boolean;                
+
+ASSIGN
+	init(activating_order) := -1;
+	next(activating_order) := case
+								count_ready < N & !has_preempt & !has_release: activating_order mod 4 + 1;
+								TRUE: -1;
+						 	  esac;
+
+	init(activate[1]) := FALSE;
+	init(activate[2]) := FALSE;
+	init(activate[3]) := FALSE;
+	init(activate[4]) := FALSE;
+
+	next(activate[1]) := next(activating_order) = 1 & !has_release & !has_preempt;
+	next(activate[2]) := next(activating_order) = 2 & !has_release & !has_preempt;
+	next(activate[3]) := next(activating_order) = 3 & !has_release & !has_preempt;
+	next(activate[4]) := next(activating_order) = 4 & !has_release & !has_preempt;
+
+	init(start[1]) := FALSE;
+	init(start[2]) := FALSE;
+	init(start[3]) := FALSE;
+	init(start[4]) := FALSE;
+
+	next(start[1]) := next(taskOnProc) = 1 ;
+	next(start[2]) := next(taskOnProc) = 2 ;
+	next(start[3]) := next(taskOnProc) = 3 ;
+	next(start[4]) := next(taskOnProc) = 4 ;
+
+
+	init(chosenQueue) := -1;
+	next(chosenQueue) := case
+							q3pr.queue[0] != -1 & taskOnProc_prior < 3: 3;
+							q2pr.queue[0] != -1 & taskOnProc_prior < 2: 2;
+							q1pr.queue[0] != -1 & taskOnProc_prior < 1: 1;
+							q0pr.queue[0] != -1 & taskOnProc_prior < 0: 0;
+							TRUE: -1;
+						 esac;
+
+	init(taskOnProc) := -1;
+	next(taskOnProc) :=
+		case
+			( taskOnProc = 1 & (next(T1.terminate)) | (next(preempt[1])) ) |
+			( taskOnProc = 2 & (next(T2.terminate)) | (next(preempt[2])) ) |
+			( taskOnProc = 3 & (next(T3.terminate)) | (next(preempt[3])) | (next(wait[3])) ) |
+			( taskOnProc = 4 & (next(T4.terminate)) | (next(preempt[4])) | (next(wait[4])) ) : -1;
+			next(chosenQueue) = 0 : q0pr.queue[0];
+			next(chosenQueue) = 1 : q1pr.queue[0];
+			next(chosenQueue) = 2 : q2pr.queue[0];
+			next(chosenQueue) = 3 : q3pr.queue[0];
+			TRUE: taskOnProc;
+		esac;
+		
+	init(taskOnProc_prior) := -1;
+	next(taskOnProc_prior) := 
+		case
+			( taskOnProc = 1 & (next(T1.terminate)) | (next(preempt[1])) ) |
+			( taskOnProc = 2 & (next(T2.terminate)) | (next(preempt[2])) ) |
+			( taskOnProc = 3 & (next(T3.terminate)) | (next(preempt[3])) | (next(wait[3])) ) |
+			( taskOnProc = 4 & (next(T4.terminate)) | (next(preempt[4])) | (next(wait[4])) ) : -1;
+			next(chosenQueue) = 0 : 0;
+			next(chosenQueue) = 1 : 1;
+			next(chosenQueue) = 2 : 2;
+			next(chosenQueue) = 3 : 3;
+			TRUE: taskOnProc_prior;
+		esac;
+
+
+	init(preempt[1]) := FALSE;
+	init(preempt[2]) := FALSE;
+	init(preempt[3]) := FALSE;
+	init(preempt[4]) := FALSE;
+
+	next(preempt[1]) := (taskOnProc = 1) & (next(chosenQueue) > taskOnProc_prior) & !(T1.terminate);
+	next(preempt[2]) := (taskOnProc = 2) & (next(chosenQueue) > taskOnProc_prior) & !(T2.terminate);
+	next(preempt[3]) := (taskOnProc = 3) & (next(chosenQueue) > taskOnProc_prior) & !(T3.terminate);
+	next(preempt[4]) := (taskOnProc = 4) & (next(chosenQueue) > taskOnProc_prior) & !(T4.terminate);
+
+
+	init(wait[3]):= FALSE;
+	init(wait[4]):= FALSE;
+
+	next(wait[3]):= case
+						T3.state = Running: { TRUE, FALSE };
+						TRUE: FALSE;
+					esac;
+	next(wait[4]):= case
+						T4.state = Running: { TRUE, FALSE };
+						TRUE: FALSE;
+					esac;
+
+
+	init(release[3]):= FALSE;
+	init(release[4]):= FALSE;
+
+	next(release[3]):= case
+						(count_ready < N) & !has_preempt & (T3.state = Waiting): TRUE;
+						TRUE: FALSE;
+					 esac;
+	next(release[4]):= case
+						(count_ready < N) & !has_preempt & (T4.state = Waiting): TRUE;
+						TRUE: FALSE;
+					 esac;
+
+-----------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
+MODULE main
+VAR
+	s: Scheduler(ready_tasks_num, N);
+
+DEFINE
+	N := 4;
+	ready_tasks_num := count(s.T1.state = Ready, s.T2.state = Ready,
+							 s.T3.state = Ready, s.T4.state = Ready);
+	running_tasks_num := count(s.T1.state = Running, s.T2.state = Running,
+							 s.T3.state = Running, s.T4.state = Running);
+	
+-----------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
+--- 1 - задача с более высоким приоритетом не может ждать завершения задачи с более низким приоритетом
+
+CTLSPEC AG ((s.taskOnProc_prior < 3 & s.q3pr.queue[0] = 1)
+											-> AX (s.T1.state = Running & s.taskOnProc = 1));
+CTLSPEC AG ((s.taskOnProc_prior < 3 & s.q3pr.queue[0] = 2)
+											-> AX (s.T2.state = Running & s.taskOnProc = 2));
+CTLSPEC AG ((s.taskOnProc_prior < 3 & s.q3pr.queue[0] = 3)
+											-> AX (s.T3.state = Running & s.taskOnProc = 3));
+CTLSPEC AG ((s.taskOnProc_prior < 3 & s.q3pr.queue[0] = 4)
+											-> AX (s.T4.state = Running & s.taskOnProc = 4));
+CTLSPEC AG ((s.taskOnProc_prior < 2 & s.q2pr.queue[0] =  1
+				& s.q3pr.queue[0] = -1) -> AX (s.T2.state = Running));
+CTLSPEC AG ((s.taskOnProc_prior < 2 & s.q2pr.queue[0] = 2 
+				& s.q3pr.queue[0] = -1) -> AX (s.T2.state = Running));
+CTLSPEC AG ((s.taskOnProc_prior < 2 & s.q2pr.queue[0] = 3
+				& s.q3pr.queue[0] = -1) -> AX (s.T3.state = Running));
+CTLSPEC AG ((s.taskOnProc_prior < 2 & s.q2pr.queue[0] = 4
+				& s.q3pr.queue[0] = -1) -> AX (s.T4.state = Running));
+CTLSPEC AG ((s.taskOnProc_prior < 1 & s.q1pr.queue[0] = 1
+				& s.q3pr.queue[0] = -1 & s.q2pr.queue[0] = -1) -> AX (s.T1.state = Running));
+CTLSPEC AG ((s.taskOnProc_prior < 1 & s.q1pr.queue[0] = 2
+				& s.q3pr.queue[0] = -1 & s.q2pr.queue[0] = -1) -> AX (s.T2.state = Running));
+CTLSPEC AG ((s.taskOnProc_prior < 1 & s.q1pr.queue[0] = 3
+				& s.q3pr.queue[0] = -1 & s.q2pr.queue[0] = -1) -> AX (s.T3.state = Running));
+CTLSPEC AG ((s.taskOnProc_prior < 1 & s.q1pr.queue[0] = 4
+				& s.q3pr.queue[0] = -1 & s.q2pr.queue[0] = -1) -> AX (s.T4.state = Running));
+				
+--- 2 - 2 задачи не могут находиться в запущенном состоянии
+CTLSPEC AG (running_tasks_num < 2);
+
+--- 3 -  в состоянии готовности может находиться не более N задач
+CTLSPEC AG (ready_tasks_num <= N);
+
+---вытеснение более приоритетной задачи (чем) менее приоритетной (кого)
+CTLSPEC AG ((s.T3.state = Running & s.T2.state = Ready & (s.T2.priority > s.T3.priority)))
+				-> AX (s.preempt[3] & s.taskOnProc = 2);
+
+
+--- тот же приоритет, порядок, как в очереди
+CTLSPEC AG ( (s.T1.priority = 3 & s.T2.priority = 3 & s.T1.state = Ready & s.T2.state = Ready
+				& s.q3pr.queue[0] = 2 & s.q3pr.queue[1] = 1)
+					-> AX(s.T2.state = Running & s.T1.state = Ready) & AX(s.T1.state = Running) );
+					
+--- тот же приоритет, запуск в том же порядке, что и активированный
+CTLSPEC AG ( (s.activate[2] & s.T2.priority = 3 & AX(s.activate[1] & s.T1.priority = 3))
+					-> AX(s.start[2] & s.T2.state = Running & s.T1.state = Ready)
+							& AX(s.start[1] & s.T1.state = Running) );
+
+
+--- одна и та же приоритетная задача может выполняться во время ожидания расширенной задачи
+CTLSPEC AG ( (s.T1.priority = 2 & s.T3.priority = 2 & s.T1.state = Ready & s.T3.state = Running
+				& s.q3pr.queue[0] = -1 & s.q2pr.queue[0] = 1 & AX(s.T3.state = Waiting))
+					-> AX(s.T1.state = Running) );
+CTLSPEC AG ( (s.T4.priority = 2 & s.T3.priority = 2 & s.T4.state = Ready & s.T3.state = Running
+				& s.q3pr.queue[0] = -1 & s.q2pr.queue[0] = 4 & AX(s.T3.state = Waiting))
+					-> AX(s.T4.state = Running) );
+					
+--- ожидание расширенной задачи с более высоким приоритетом при выполнении задачи с более низким приоритетомg
+CTLSPEC AG ( (s.T1.priority = 1 & s.T3.priority = 2 & s.T1.state = Ready & s.T3.state = Running
+				& s.q3pr.queue[0] = -1 & s.q2pr.queue[0] = -1 & s.q1pr.queue[0] = 1 & AX(s.T3.state = Waiting))
+					-> AX(s.T1.state = Running) );
+
+
+--- задача из состояния ожидания переходит в конец очереди
+CTLSPEC AG (s.T1.priority = 3 & s.T2.priority = 2 & s.T3.priority = 2
+				& s.q2pr.queue[0] = 2 & s.T3.state = Waiting & AX(s.release[3] & s.T3.state = Ready)
+					-> AX(s.q2pr.queue[1] = 3));
+CTLSPEC AG (s.T1.priority = 3 & s.T2.priority = 2 & s.T4.priority = 2
+				& s.q2pr.queue[0] = 2 & s.T4.state = Waiting & AX(s.release[4] & s.T4.state = Ready)
+					-> AX(s.q2pr.queue[1] = 4));
+
+--- задача не находится в постоянной готовности
+CTLSPEC AG (s.T1.state = Ready -> AF(s.T1.state = Suspended));
+CTLSPEC AG (s.T2.state = Ready -> AF(s.T2.state = Suspended));
+CTLSPEC AG (s.T3.state = Ready -> AF(s.T3.state = Suspended));
+CTLSPEC AG (s.T4.state = Ready -> AF(s.T4.state = Suspended));

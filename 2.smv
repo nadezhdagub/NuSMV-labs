@@ -1,0 +1,679 @@
+---------------------------------------------------------------------
+--------------------Client-------------------------------------------
+---------------------------------------------------------------------
+MODULE Client(num, take_tests,hand_over_card, t, n, h, d, e, c)               
+VAR
+action: {want_appointment , on_tests, leave,handing, atT, atN, atH, atD, atE, atC};  
+day_time: 0..2;
+has_reference : boolean;    
+							
+ASSIGN
+init(action) := want_appointment;													
+next(action) :=																
+	case
+		action = want_appointment & t = num : atT;		
+		action = want_appointment & d = num : atD;	
+		action = want_appointment & e = num : atE;		
+		
+		action in {want_appointment, atT} & take_tests = num : on_tests;   
+		action = atT & next(on_tests) = num : take_tests;  
+		action in {want_appointment, atT} & n = num : atN;   
+		action = atT & next(atN) = num : n; 
+		
+		action = atT & next(atD) = num : d; 
+		action = atT & next(atE) = num : e; 
+		action = atD & next(atT) = num : t; 
+		action = atE & next(atT) = num : t; 
+		
+		action in {atT, on_tests} & h = num : atH;   
+		action = on_tests & next(atH) = num : h;  
+		action in {atT, on_tests} & c = num : atC;   
+		action = on_tests & next(atC) = num : cm; 
+		action in {atT, on_tests} & n = num : atN; 
+		action in {atT, on_tests} & d = num : atD;  
+		action in {atT, on_tests} & e = num : atE;    		
+		
+		action = atH & next(atC) = num : c; 
+		action = atC & next(atH) = num : h; 
+		action = atH & next(atN) = num : n; 
+		action = atC & next(atN) = num : n;
+		
+		action = atN & next(atD) = num : d;
+		action = atH & next(atD) = num : d; 
+		action = atC & next(atD) = num : d; 
+		action = atH & next(atE) = num : e; 
+		action = atC & next(atE) = num : e;
+		action = atN & next(atE) = num : e;
+		action = atE & next(atD) = num : d; 
+		action = atD & next(atE) = num : e; 
+		
+		action = atT & next(atT) = num : has_reference; 
+		
+		action = atT |atN | atH | atD | atE | atC |on_tests : hand_over_card;
+		action = hand_over_card : leave;											
+		TRUE : action;
+	esac;	
+	
+	init(day_time) := 0;                         
+	next(day_time) :=
+	case
+		action != atT |atN | atH | atD | atE | atC |on_tests : 0;    ----------------------------------------
+		day_time = 2 : 2;
+		TRUE : day_time + 1;
+	esac;
+	
+	init(has_reference) := FALSE;
+	next(has_reference) :=
+	case
+		action = atT & !next(atE) & !next(atD) & !next(atN) & !next(atC)& !next(atH) & !next(on_tests) & day_time = 2 : TRUE;   
+		TRUE : FALSE;        	
+	esac;
+
+--------------------------------------------------------------------
+--------------------DoctorT-------------------------------------
+--------------------------------------------------------------------
+MODULE DoctorT(num, can_release, day, test, reference)           												 
+VAR
+action: {accepts_patient, release, sleep};       
+office: -1..0;
+cout: 1..8;    
+want_release: boolean;							 
+accepts_time: 0..2;                               
+ASSIGN
+init(action) := sleep;
+next(action) :=
+	case
+		can_release = num :release;            
+		next(office) = -1 | day = 7 | day = 5: sleep;				
+		TRUE : accepts_patient | accepts_patient & test |  accepts_patient & reference;
+	esac;
+init(want_release) := FALSE;                        
+next(want_release) := 
+	case
+		can_release = num : FALSE;                  
+		want_release : TRUE;
+		action = accepts_patient : 
+			case
+				accepts_time < 2 : {FALSE, TRUE};
+				TRUE : TRUE;
+			esac;
+		TRUE : FALSE;
+	esac;
+init(haircut_time) := 0;                         
+next(haircut_time) :=
+	case
+		action != accepts_patient | want_release : 0;
+		haircut_time = 2 : 2;
+		TRUE : haircut_time + 1;
+	esac;
+	
+init(cout) := 0;                         
+next(cout) :=
+	case
+		action = accepts_patient  : 1;
+		cout = 8 : 8;
+		TRUE : cout + 1;
+	esac;
+	
+init(day) := 1;                         
+next(day) :=
+	case
+		cout = 8 : 2;
+		day = 5 : 6;
+		day = 7 : 7;
+		TRUE : day + 1;
+	esac;
+	
+--------------------------------------------------------------------
+--------------------DoctorN-------------------------------------
+--------------------------------------------------------------------
+MODULE DoctorN(num, can_release, day)           												 
+VAR
+action: {accepts_patient, release, sleep};       
+office:0..1;
+cout:1..8;    
+want_release: boolean;							 
+accepts_time: 0..2;                               
+ASSIGN
+init(action) := sleep;
+next(action) :=
+	case
+		can_release = num :release;            
+		next(office) = 0 | day = 7 : sleep;				
+		TRUE : accepts_patient;
+	esac;
+init(want_release) := FALSE;                        
+next(want_release) := 
+	case
+		can_release = num : FALSE;                  
+		want_release : TRUE;
+		action = accepts_patient : 
+			case
+				accepts_time < 2 : {FALSE, TRUE};
+				TRUE : TRUE;
+			esac;
+		TRUE : FALSE;
+	esac;
+init(haircut_time) := 0;                         
+next(haircut_time) :=
+	case
+		action != accepts_patient | want_release : 0;
+		haircut_time = 2 : 2;
+		TRUE : haircut_time + 1;
+	esac;
+	
+init(cout) := 0;                         
+next(cout) :=
+	case
+		action = accepts_patient  : 1;
+		cout = 8 : 8;
+		TRUE : cout + 1;
+	esac;
+	
+init(day) := 1;                         
+next(day) :=
+	case
+		cout = 8 : 2;
+		day = 7 : 7;
+		TRUE : day + 1;
+	esac;
+
+--------------------------------------------------------------------
+--------------------DoctorE-------------------------------------
+--------------------------------------------------------------------
+MODULE DoctorE(num, can_release, day)           												 
+VAR
+action: {accepts_patient, release, sleep};       
+office:1..2;
+cout:1..8;    
+want_release: boolean;							 
+accepts_time: 0..2;                               
+ASSIGN
+init(action) := sleep;
+next(action) :=
+	case
+		can_release = num: release;            
+		next(office) = 1 | day = 7 : sleep;				
+		TRUE : accepts_patient;
+	esac;
+init(want_release) := FALSE;                        
+next(want_release) := 
+	case
+		can_release = num : FALSE;                  
+		want_release : TRUE;
+		action = accepts_patient : 
+			case
+				accepts_time < 2 : {FALSE, TRUE};
+				TRUE : TRUE;
+			esac;
+		TRUE : FALSE;
+	esac;
+init(haircut_time) := 0;                         
+next(haircut_time) :=
+	case
+		action != accepts_patient | want_release : 0;
+		haircut_time = 2 : 2;
+		TRUE : haircut_time + 1;
+	esac;
+	
+init(cout) := 0;                         
+next(cout) :=
+	case
+		action = accepts_patient  : 1;
+		cout = 8 : 8;
+		TRUE : cout + 1;
+	esac;
+	
+init(day) := 1;                         
+next(day) :=
+	case
+		cout = 8 : 2;
+		day = 7 : 7;
+		TRUE : day + 1;
+	esac;		
+
+--------------------------------------------------------------------
+--------------------DoctorD-------------------------------------
+--------------------------------------------------------------------
+MODULE DoctorD(num, can_release, day)           												 
+VAR
+action: {accepts_patient, release, sleep};       
+office:2..3;
+cout:1..8;    
+want_release: boolean;							 
+accepts_time: 0..2;                               
+ASSIGN
+init(action) := sleep;
+next(action) :=
+	case
+		can_release = num :release;            
+		next(office) = 2 | day = 7 : sleep;				
+		TRUE : accepts_patient;
+	esac;
+init(want_release) := FALSE;                        
+next(want_release) := 
+	case
+		can_release = num : FALSE;                  
+		want_release : TRUE;
+		action = accepts_patient : 
+			case
+				accepts_time < 2 : {FALSE, TRUE};
+				TRUE : TRUE;
+			esac;
+		TRUE : FALSE;
+	esac;
+init(haircut_time) := 0;                         
+next(haircut_time) :=
+	case
+		action != accepts_patient | want_release : 0;
+		haircut_time = 2 : 2;
+		TRUE : haircut_time + 1;
+	esac;
+	
+init(cout) := 0;                         
+next(cout) :=
+	case
+		action = accepts_patient  : 1;
+		cout = 8 : 8;
+		TRUE : cout + 1;
+	esac;
+	
+init(day) := 1;                         
+next(day) :=
+	case
+		cout = 8 : 2;
+		day = 7 : 7;
+		TRUE : day + 1;
+	esac;	
+	
+	--------------------------------------------------------------------
+--------------------DoctorC-------------------------------------
+--------------------------------------------------------------------
+MODULE DoctorC(num, can_release, day)           												 
+VAR
+action: {accepts_patient, release, sleep};       
+office:3..4;
+cout:1..8;    
+want_release: boolean;							 
+accepts_time: 0..2;                               
+ASSIGN
+init(action) := sleep;
+next(action) :=
+	case
+		can_release = num: release;            
+		next(office) = 3 | day = 7 : sleep;				
+		TRUE : accepts_patient;
+	esac;
+init(want_release) := FALSE;                        
+next(want_release) := 
+	case
+		can_release = num : FALSE;                  
+		want_release : TRUE;
+		action = accepts_patient : 
+			case
+				accepts_time < 2 : {FALSE, TRUE};
+				TRUE : TRUE;
+			esac;
+		TRUE : FALSE;
+	esac;
+init(haircut_time) := 0;                         
+next(haircut_time) :=
+	case
+		action != accepts_patient | want_release : 0;
+		haircut_time = 2 : 2;
+		TRUE : haircut_time + 1;
+	esac;
+	
+init(cout) := 0;                         
+next(cout) :=
+	case
+		action = accepts_patient  : 1;
+		cout = 8 : 8;
+		TRUE : cout + 1;
+	esac;
+	
+init(day) := 1;                         
+next(day) :=
+	case
+		cout = 8 : 2;
+		day = 7 : 7;
+		TRUE : day + 1;
+	esac;	
+
+	--------------------------------------------------------------------
+--------------------DoctorH-------------------------------------
+--------------------------------------------------------------------
+MODULE DoctorH(num, can_release, day)           												 
+VAR
+action: {accepts_patient, release, sleep};       
+office:4..5;
+cout:1..8;    
+want_release: boolean;							 
+accepts_time: 0..2;                               
+ASSIGN
+init(action) := sleep;
+next(action) :=
+	case
+		can_release = num: release;            
+		next(office) = 4 | day = 7 : sleep;				
+		TRUE : accepts_patient;
+	esac;
+init(want_release) := FALSE;                        
+next(want_release) := 
+	case
+		can_release = num : FALSE;                  
+		want_release : TRUE;
+		action = accepts_patient : 
+			case
+				accepts_time < 2 : {FALSE, TRUE};
+				TRUE : TRUE;
+			esac;
+		TRUE : FALSE;
+	esac;
+init(haircut_time) := 0;                         
+next(haircut_time) :=
+	case
+		action != accepts_patient | want_release : 0;
+		haircut_time = 2 : 2;
+		TRUE : haircut_time + 1;
+	esac;
+	
+init(cout) := 0;                         
+next(cout) :=
+	case
+		action = accepts_patient  : 1;
+		cout = 8 : 8;
+		TRUE : cout + 1;
+	esac;
+	
+init(day) := 1;                         
+next(day) :=
+	case
+		cout = 8 : 2;
+		day = 7 : 7;
+		TRUE : day + 1;
+	esac;	
+
+-----------------------------------------------------------------------
+----------------------Hospital---------------------------------------------
+-----------------------------------------------------------------------
+MODULE Hospital(want_release_0, want_release_1, want_release_2, want_release_3, want_release_4, want_release_5,
+                cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9)  
+VAR
+queue_is_moving: boolean;   
+enter: 0..9;                              
+--release: 0..9;                          
+can_release : -1..5;                    
+sit_in_office: 0..9;					
+qT : array 0..7 of  0..9;      
+qN : array 0..7 of  0..9;    
+qC : array 0..7 of  0..9;    
+qD : array 0..7 of  0..9;    
+qE : array 0..7 of  0..9;    
+qH : array 0..7 of  0..9;     	
+free_seat: -1..7;                                     
+free_office: -1..5;					
+
+ASSIGN
+queue_is_moving := qT[0] = 0 | qN[0] = 0 | qC[0] = 0 | qD[0] = 0 | qE[0] = 0 | qH[0] = 0;  
+free_seat := 								
+	case									
+		queue_is_moving :
+			case
+			    qT[1] = 0 : 0;
+				qT[1] = 0 : 1;
+				qT[1] = 0 : 2;
+				qT[1] = 0 : 3;
+				qT[1] = 0 : 4;
+				qT[1] = 0 : 5;
+				qT[1] = 0 : 6;
+				
+				qN[1] = 0 : 0;
+				qN[1] = 0 : 1;
+				qN[1] = 0 : 2;
+				qN[1] = 0 : 3;
+				qN[1] = 0 : 4;
+				qN[1] = 0 : 5;
+				qN[1] = 0 : 6;
+				
+				qC[1] = 0 : 0;
+				qC[1] = 0 : 1;
+				qC[1] = 0 : 2;
+				qC[1] = 0 : 3;
+				qC[1] = 0 : 4;
+				qC[1] = 0 : 5;
+				qC[1] = 0 : 6;
+				
+				qD[1] = 0 : 0;
+				qD[1] = 0 : 1;
+				qD[1] = 0 : 2;
+				qD[1] = 0 : 3;
+				qD[1] = 0 : 4;
+				qD[1] = 0 : 5;
+				qD[1] = 0 : 6;
+				
+				qE[1] = 0 : 0;
+				qE[1] = 0 : 1;
+				qE[1] = 0 : 2;
+				qE[1] = 0 : 3;
+				qE[1] = 0 : 4;
+				qE[1] = 0 : 5;
+				qE[1] = 0 : 6;
+				
+				qH[1] = 0 : 0;
+				qH[1] = 0 : 1;
+				qH[1] = 0 : 2;
+				qH[1] = 0 : 3;
+				qH[1] = 0 : 4;
+				qH[1] = 0 : 5;
+				qH[1] = 0 : 6;
+				
+				TRUE : 7;
+			esac;
+			
+		qT[1] = 0 : 1;
+		qT[1] = 0 : 2;
+		qT[1] = 0 : 3;
+		qT[1] = 0 : 4;
+		qT[1] = 0 : 5;
+		qT[1] = 0 : 6;
+		qT[1] = 0 : 7;
+				
+		qN[1] = 0 : 1;
+		qN[1] = 0 : 2;
+		qN[1] = 0 : 3;
+		qN[1] = 0 : 4;
+		qN[1] = 0 : 5;
+		qN[1] = 0 : 6;
+		qN[1] = 0 : 7;
+				
+		qC[1] = 0 : 1;
+		qC[1] = 0 : 2;
+		qC[1] = 0 : 3;
+		qC[1] = 0 : 4;
+		qC[1] = 0 : 5;
+		qC[1] = 0 : 6;
+		qC[1] = 0 : 7;
+				
+		qD[1] = 0 : 1;
+		qD[1] = 0 : 2;
+		qD[1] = 0 : 3;
+		qD[1] = 0 : 4;
+		qD[1] = 0 : 5;
+		qD[1] = 0 : 6;
+		qD[1] = 0 : 7;
+				
+		qE[1] = 0 : 1;
+		qE[1] = 0 : 2;
+		qE[1] = 0 : 3;
+		qE[1] = 0 : 4;
+		qE[1] = 0 : 5;
+		qE[1] = 0 : 6;
+		qE[1] = 0 : 7;
+				
+		qH[1] = 0 : 1;
+		qH[1] = 0 : 2;
+		qH[1] = 0 : 3;
+		qH[1] = 0 : 4;
+		qH[1] = 0 : 5;
+		qH[1] = 0 : 6;
+		qH[1] = 0 : 7;
+				
+		TRUE : -1;
+	esac;
+free_office :=                          
+	case
+		qT[0] = 0 : 0;
+		qN[0] = 0 : 1;
+		qC[0] = 0 : 2;
+		qD[0] = 0 : 3;
+		qE[0] = 0 : 4;
+		qH[0] = 0 : 5;
+		TRUE : -1;
+	esac;
+enter :=                                  
+	case
+		free_seat < 6 & free_seat != -1:  
+			case
+				cl1 = want_appointment : 1;
+				cl2 = want_appointment : 2;
+				cl3 = want_appointment : 3;
+				cl4 = want_appointment : 4;
+				cl5 = want_appointment : 5;
+				cl6 = want_appointment : 6;
+				cl7 = want_appointment : 7;
+				cl8 = want_appointment : 8;
+				cl9 = want_appointment : 9;
+				TRUE : 0;
+			esac;
+		--queue_is_moving;
+		TRUE : 0;
+	esac; 
+
+
+can_release :=                 
+	case
+		want_release_0 : 0;
+		want_release_1 : 1;
+		want_release_2 : 2;
+		want_release_3 : 3;
+		want_release_4 : 4;
+		want_release_5 : 5;
+		TRUE : -1;
+	esac;
+
+init(sit_in_office) := 0;
+next(sit_in_office) :=                
+	case
+		qT[0] = 0 & next(qT[0]) != 0 : next(qT[0]);
+		qN[0] = 0 & next(qN[0]) != 0 : next(qN[0]);
+		qC[0] = 0 & next(qC[0]) != 0 : next(qC[0]);
+		qD[0] = 0 & next(qD[0]) != 0 : next(qD[0]);
+		qE[0] = 0 & next(qE[0]) != 0 : next(qE[0]);
+		qH[0] = 0 & next(qH[0]) != 0 : next(qH[0]);
+		TRUE : 0;
+	esac;
+--release :=                   
+--	case
+	--	can_release != -1 : qT[can_release];
+--		can_release != -1 : qN[can_release];
+--		can_release != -1 : qC[can_release];
+--		can_release != -1 : qD[can_release];
+--		can_release != -1 : qE[can_release];
+--		can_release != -1 : qH[can_release];
+--		TRUE : 0;
+--	esac;
+
+init(qT[0]) := 0;
+init(qN[0]) := 0;
+init(qC[0]) := 0;
+init(qD[0]) := 0;
+init(qE[0]) := 0;
+init(qH[0]) := 0;
+next(qT[0]) :=                   
+	case
+		can_release = 0 : 0;
+		free_office = 0 : 0;
+		TRUE : qT[0];
+	esac;
+next(qN[0]) := 
+	case
+		can_release = 1 : 0;
+		free_office = 1 : 0;
+		TRUE : qN[0];
+	esac;
+next(qC[0]) := 
+	case
+		can_release = 2 : 0;
+		free_office = 2 : 0;
+		TRUE : qC[0];
+	esac;
+next(qD[0]) := 
+	case
+		can_release = 3 : 0;
+		free_office = 3 : 0;
+		TRUE : qD[0];
+	esac;
+next(qE[0]) := 
+	case
+		can_release = 4 : 0;
+		free_office = 4: 0;
+		TRUE : qE[0];
+	esac;
+next(qH[0]) := 
+	case
+		can_release = 5 : 0;
+		free_office = 5 : 0;
+		TRUE : qH[0];
+	esac;
+	
+	
+----------------------------------------------------------------
+----------------------Main--------------------------------------
+----------------------------------------------------------------
+MODULE main
+VAR
+	hd0: DoctorT(0,  bs.can_release, bs.day, bs.test, bs.reference);
+	hd1: DoctorN(1, bs.can_release, bs.day);
+	hd2: DoctorC(2, bs.can_release, bs.day);
+	hd3: DoctorD(3, bs.can_release, bs.day);
+	hd4: DoctorE(4, bs.can_release, bs.day);
+	hd5: DoctorH(5, bs.can_release, bs.day);
+	cl1: Client(1, bs.take_tests, bs.hand_over_card, bs.t, bs.n, bs.h, bs.d, bs.e, bs.c);
+	cl2: Client(2, bs.take_tests, bs.hand_over_card, bs.t, bs.n, bs.h, bs.d, bs.e, bs.c);
+	cl3: Client(3, bs.take_tests, bs.hand_over_card, bs.t, bs.n, bs.h, bs.d, bs.e, bs.c);
+	cl4: Client(4, bs.take_tests, bs.hand_over_card, bs.t, bs.n, bs.h, bs.d, bs.e, bs.c);
+	cl5: Client(5, bs.take_tests, bs.hand_over_card, bs.t, bs.n, bs.h, bs.d, bs.e, bs.c);
+	cl6: Client(6, bs.take_tests, bs.hand_over_card, bs.t, bs.n, bs.h, bs.d, bs.e, bs.c);
+	cl7: Client(7, bs.take_tests, bs.hand_over_card, bs.t, bs.n, bs.h, bs.d, bs.e, bs.c);
+	cl8: Client(8, bs.take_tests, bs.hand_over_card, bs.t, bs.n, bs.h, bs.d, bs.e, bs.c);
+	cl9: Client(9, bs.take_tests, bs.hand_over_card, bs.t, bs.n, bs.h, bs.d, bs.e, bs.c);
+	bs: Hospital(hd0.want_release, hd1.want_release, hd2.want_release, hd3.want_release, hd4.want_release, hd5.want_release,
+			cl1.action, cl2.action, cl3.action, cl4.action, cl5.action, cl6.action, cl7.action, cl8.action, cl9.action);
+
+--Свойство 1: Клиент не может зайти в парикмахерскую, если она заполнена
+SPEC AG ((bs.free_seat = -1 & cl1.action = want_enter) -> !EX cl1.action in {wait_on_sofa, wait_standing});
+SPEC AG ((bs.free_seat = -1 & cl2.action = want_enter) -> !EX cl2.action in {wait_on_sofa, wait_standing});
+SPEC AG ((bs.free_seat = -1 & cl3.action = want_enter) -> !EX cl3.action in {wait_on_sofa, wait_standing});
+SPEC AG ((bs.free_seat = -1 & cl4.action = want_enter) -> !EX cl4.action in {wait_on_sofa, wait_standing});
+SPEC AG ((bs.free_seat = -1 & cl5.action = want_enter) -> !EX cl5.action in {wait_on_sofa, wait_standing});
+SPEC AG ((bs.free_seat = -1 & cl6.action = want_enter) -> !EX cl6.action in {wait_on_sofa, wait_standing});
+SPEC AG ((bs.free_seat = -1 & cl7.action = want_enter) -> !EX cl7.action in {wait_on_sofa, wait_standing});
+SPEC AG ((bs.free_seat = -1 & cl8.action = want_enter) -> !EX cl8.action in {wait_on_sofa, wait_standing});
+SPEC AG ((bs.free_seat = -1 & cl9.action = want_enter) -> !EX cl9.action in {wait_on_sofa, wait_standing});
+
+--После стрижки парикмахер всегда принимает оплату
+SPEC AG (hd0.action = cut_hair -> A[hd0.action = cut_hair U hd0.action = get_payment]);
+SPEC AG (hd1.action = cut_hair -> A[hd1.action = cut_hair U hd1.action = get_payment]);
+SPEC AG (hd2.action = cut_hair -> A[hd2.action = cut_hair U hd2.action = get_payment]);
+
+--Если клиента нету парикмахер спит
+SPEC AG (bs.chairs[0] = 0 & hd0.action != get_payment -> hd0.action = sleep);
+SPEC AG (bs.chairs[1] = 0 & hd1.action != get_payment -> hd1.action = sleep);
+SPEC AG (bs.chairs[2] = 0 & hd2.action != get_payment -> hd2.action = sleep);
+
+--Клиенты производят оплату в порядке очереди
+SPEC AG ((hd0.want_pay & hd1.want_pay & hd2.want_pay) -> 
+			AX ((hd0.action = get_payment & hd1.action != get_payment & hd2.action != get_payment) &
+			AX ((hd0.action != get_payment & hd1.action = get_payment & hd2.action != get_payment) &
+			AX (hd0.action != get_payment & hd1.action != get_payment & hd2.action = get_payment))));

@@ -1,0 +1,516 @@
+-- MODELING WORK OF HOSPITAL
+
+-- DOCTOR
+MODULE doctor(doctorIDVar)
+
+VAR
+    doctorID		: {1, 2, 3, 4, 5, 6};
+    clID		: {0, 1, 2, 3, 4, 5, 6, 7, 8};
+ASSIGN
+    init(doctorID)		:= doctorIDVar;
+    next(doctorID)		:= doctorID;
+
+    init(clID) 		:= 0;
+
+-- CLIENT
+MODULE client(clientIDVar)
+VAR
+    clientID	: {1, 2, 3, 4, 5, 6, 7, 8};
+    command		: {enter, leave};
+    forN:	{0, 1};
+	tests:	{0, 1};
+	ref:	{0, 1};
+	wasTer:	{0, 1};
+
+ASSIGN
+    init(clientID)	:= clientIDVar;
+    next(clientID)	:= clientID;
+
+    init(command) 	:= {enter, leave};
+    next(command) 	:= {enter, leave};
+
+    init(forN)	:= 0;                --был у врача для невролога
+    next(forN)	:= 
+	    case
+            forN = 0 : 1;
+            forN = 1 : 0;
+			TRUE : forN;	
+        esac;
+
+    init(tests)	:= 0;                 --получил анализы
+    next(tests)	:= 
+	    case
+            tests = 0 : 1;
+            tests = 1 : 0;
+			TRUE : tests;	
+        esac;
+	
+	init(ref)	:= 0;                 -- получил справку
+    next(ref)	:= 
+	    case
+            ref = 0 : 1;
+            ref = 1 : 0;
+			TRUE : ref;	
+        esac;
+		
+	init(wasTer)	:= 0;                 -- был именно у терапевта
+    next(wasTer)	:= 
+	    case
+            wasTer = 0 : 1;
+            wasTer = 1 : 0;
+			TRUE : wasTer;	
+        esac;		
+
+-- HOSPITAL
+MODULE hospital ( d1, d2, d3, d4, d5, d6, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, currentDay)
+DEFINE
+    maxDay := 7;
+VAR
+    clentQueue : {1, 2, 3, 4, 5, 6, 7, 8};
+    ill2ndClient : 0..7;
+	testClient : 0..7;
+	wasInTer : 0..7;
+ASSIGN
+
+    next(d1.clID) :=           --терапевт
+        case
+            (d1.clID = 0) & (clentQueue = 1) & (cl1.command = enter) & !(currentDay = 5) & !(currentDay = 7) &
+                (cl1.forN = 1) & (cl1.wasTer = 0) xor (cl1.tests = 1)& (cl1.wasTer = 0) 
+				xor (cl1.ref = 1) & (ill2ndClient >=7) & (cl1.wasTer = 1) xor (cl1.ref = 0) &(cl1.wasTer = 1) : 1;
+            (d1.clID = 0) & (clentQueue = 2) & (cl2.command = enter) & !(currentDay = 5) & !(currentDay = 7) &
+                (cl2.forN = 1) & (cl2.wasTer = 0) xor (cl2.tests = 1)& (cl2.wasTer = 0) 
+				xor (cl2.ref = 1) & (ill2ndClient >=7) & (cl2.wasTer = 1) xor (cl2.ref = 0) &(cl2.wasTer = 1) : 2;
+			(d1.clID = 0) & (clentQueue = 3) & (cl3.command = enter) & !(currentDay = 5) & !(currentDay = 7) &
+                (cl3.forN = 1) & (cl3.wasTer = 0) xor (cl3.tests = 1)& (cl3.wasTer = 0) 
+				xor (cl3.ref = 1) & (ill2ndClient >=7) & (cl3.wasTer = 1) xor (cl3.ref = 0) &(cl3.wasTer = 1) : 3;
+            (d1.clID = 0) & (clentQueue = 4) & (cl4.command = enter) & !(currentDay = 5) & !(currentDay = 7) &
+                (cl4.forN = 1) & (cl4.wasTer = 0) xor (cl4.tests = 1)& (cl4.wasTer = 0) 
+				xor (cl4.ref = 1) & (ill2ndClient >=7) & (cl4.wasTer = 1) xor (cl4.ref = 0) &(cl4.wasTer = 1) : 4;
+			(d1.clID = 0) & (clentQueue = 5) & (cl5.command = enter) & !(currentDay = 5) & !(currentDay = 7) &
+                (cl5.forN = 1) & (cl5.wasTer = 0) xor (cl5.tests = 1)& (cl5.wasTer = 0) 
+				xor (cl5.ref = 1) & (ill2ndClient >=7) & (cl5.wasTer = 1) xor (cl5.ref = 0) &(cl5.wasTer = 1) : 5;
+            (d1.clID = 0) & (clentQueue = 6) & (cl6.command = enter) & !(currentDay = 5) & !(currentDay = 7) &
+                (cl6.forN = 1) & (cl6.wasTer = 0) xor (cl6.tests = 1)& (cl6.wasTer = 0) 
+				xor (cl6.ref = 1) & (ill2ndClient >=7) & (cl6.wasTer = 1) xor (cl6.ref = 0) &(cl6.wasTer = 1) : 6;
+			(d1.clID = 0) & (clentQueue = 7) & (cl7.command = enter) & !(currentDay = 5) & !(currentDay = 7) &
+                (cl7.forN = 1) & (cl7.wasTer = 0) xor (cl7.tests = 1)& (cl7.wasTer = 0) 
+				xor (cl7.ref = 1) & (ill2ndClient >=7) & (cl7.wasTer = 1) xor (cl7.ref = 0) &(cl7.wasTer = 1) : 7;
+            (d1.clID = 0) & (clentQueue = 8) & (cl8.command = enter) & !(currentDay = 5) & !(currentDay = 7) &
+                (cl8.forN = 1) & (cl8.wasTer = 0) xor (cl8.tests = 1)& (cl8.wasTer = 0) 
+				xor (cl8.ref = 1) & (ill2ndClient >=7) & (cl8.wasTer = 1) xor (cl8.ref = 0) &(cl8.wasTer = 1) : 8;
+				
+            (d1.clID = 1) & (clentQueue = 1) & (cl1.command = leave) & !(currentDay = 5) & !(currentDay = 7) &
+                  (cl1.forN = 1) & (cl1.wasTer = 0) xor (cl1.tests = 1)& (cl1.wasTer = 0) 
+				  xor (cl1.ref = 1) & (ill2ndClient >=7) & (cl1.wasTer = 1) xor (cl1.ref = 0) &(cl1.wasTer = 1) : 0;
+            (d1.clID = 2) & (clentQueue = 2) & (cl2.command = leave) & !(currentDay = 5) & !(currentDay = 7) &
+                  (cl2.forN = 1) & (cl2.wasTer = 0) xor (cl2.tests = 1)& (cl2.wasTer = 0) 
+				  xor (cl2.ref = 1) & (ill2ndClient >=7) & (cl2.wasTer = 1) xor (cl2.ref = 0) &(cl2.wasTer = 1) : 0;  
+            (d1.clID = 3) & (clentQueue = 3) & (cl3.command = leave) & !(currentDay = 5) & !(currentDay = 7) &
+                  (cl3.forN = 1) & (cl3.wasTer = 0) xor (cl3.tests = 1)& (cl3.wasTer = 0) 
+				  xor (cl3.ref = 1) & (ill2ndClient >=7) & (cl3.wasTer = 1) xor (cl3.ref = 0) &(cl3.wasTer = 1) : 0;
+            (d1.clID = 4) & (clentQueue = 4) & (cl4.command = leave) & !(currentDay = 5) & !(currentDay = 7) &
+                  (cl4.forN = 1) & (cl4.wasTer = 0) xor (cl4.tests = 1)& (cl4.wasTer = 0) 
+				  xor (cl4.ref = 1) & (ill2ndClient >=7) & (cl4.wasTer = 1) xor (cl4.ref = 0) &(cl4.wasTer = 1) : 0;   
+            (d1.clID = 5) & (clentQueue = 5) & (cl5.command = leave) & !(currentDay = 5) & !(currentDay = 7) &
+                  (cl5.forN = 1) & (cl5.wasTer = 0) xor (cl5.tests = 1)& (cl5.wasTer = 0) 
+				  xor (cl5.ref = 1) & (ill2ndClient >=7) & (cl5.wasTer = 1) xor (cl5.ref = 0) &(cl5.wasTer = 1) : 0;
+            (d1.clID = 6) & (clentQueue = 6) & (cl6.command = leave) & !(currentDay = 5) & !(currentDay = 7) &
+                  (cl6.forN = 1) & (cl6.wasTer = 0) xor (cl6.tests = 1)& (cl6.wasTer = 0) 
+				  xor (cl6.ref = 1) & (ill2ndClient >=7) & (cl6.wasTer = 1) xor (cl6.ref = 0) &(cl6.wasTer = 1) : 0;   
+            (d1.clID = 7) & (clentQueue = 7) & (cl7.command = leave) & !(currentDay = 5) & !(currentDay = 7) &
+                  (cl7.forN = 1) & (cl7.wasTer = 0) xor (cl7.tests = 1)& (cl7.wasTer = 0) 
+				  xor (cl7.ref = 1) & (ill2ndClient >=7) & (cl7.wasTer = 1) xor (cl7.ref = 0) &(cl7.wasTer = 1) : 0;
+            (d1.clID = 8) & (clentQueue = 8) & (cl8.command = leave) & !(currentDay = 5) & !(currentDay = 7) &
+                  (cl8.forN = 1) & (cl8.wasTer = 0) xor (cl8.tests = 1)& (cl8.wasTer = 0) 
+				  xor (cl8.ref = 1) & (ill2ndClient >=7) & (cl8.wasTer = 1) xor (cl8.ref = 0) &(cl8.wasTer = 1) : 0;   				  
+            TRUE : d1.clID;
+        esac;
+
+    next(d2.clID) :=          --невролог
+        case
+            (d2.clID = 0) & (clentQueue = 1) & (cl1.command = enter) & (wasInTer > 0) & (ill2ndClient = 0) & !(currentDay = 7): 1;
+            (d2.clID = 0) & (clentQueue = 2) & (cl2.command = enter) & (wasInTer > 0) & (ill2ndClient = 0) & !(currentDay = 7): 2;
+            (d2.clID = 0) & (clentQueue = 3) & (cl3.command = enter) & (wasInTer > 0) & (ill2ndClient = 0) & !(currentDay = 7): 3;
+            (d2.clID = 0) & (clentQueue = 4) & (cl4.command = enter) & (wasInTer > 0) & (ill2ndClient = 0) & !(currentDay = 7): 4;
+            (d2.clID = 0) & (clentQueue = 5) & (cl5.command = enter) & (wasInTer > 0) & (ill2ndClient = 0) & !(currentDay = 7): 5;
+            (d2.clID = 0) & (clentQueue = 6) & (cl6.command = enter) & (wasInTer > 0) & (ill2ndClient = 0) & !(currentDay = 7): 6;
+            (d2.clID = 0) & (clentQueue = 7) & (cl7.command = enter) & (wasInTer > 0) & (ill2ndClient = 0 & !(currentDay = 7)): 7;
+            (d2.clID = 0) & (clentQueue = 8) & (cl8.command = enter) & (wasInTer > 0) & (ill2ndClient = 0 & !(currentDay = 7)): 8;			
+            (d2.clID = 1) & (clentQueue = 1) & (cl1.command = leave) & (wasInTer > 0) & (ill2ndClient = 0 & !(currentDay = 7)): 0;
+            (d2.clID = 2) & (clentQueue = 2) & (cl2.command = leave) & (wasInTer > 0) & (ill2ndClient = 0 & !(currentDay = 7)): 0;
+			(d2.clID = 3) & (clentQueue = 3) & (cl3.command = leave) & (wasInTer > 0) & (ill2ndClient = 0 & !(currentDay = 7)): 0;
+            (d2.clID = 4) & (clentQueue = 4) & (cl4.command = leave) & (wasInTer > 0) & (ill2ndClient = 0) & !(currentDay = 7): 0;
+			(d2.clID = 5) & (clentQueue = 5) & (cl5.command = leave) & (wasInTer > 0) & (ill2ndClient = 0) & !(currentDay = 7): 0;
+            (d2.clID = 6) & (clentQueue = 6) & (cl6.command = leave) & (wasInTer > 0) & (ill2ndClient = 0) & !(currentDay = 7): 0;
+			(d2.clID = 7) & (clentQueue = 7) & (cl7.command = leave) & (wasInTer > 0) & (ill2ndClient = 0) & !(currentDay = 7): 0;
+            (d2.clID = 8) & (clentQueue = 8) & (cl8.command = leave) & (wasInTer > 0) & (ill2ndClient = 0) & !(currentDay = 7): 0;
+            TRUE : d2.clID;
+        esac;
+
+    next(d3.clID) :=   --хирург
+        case
+            (d3.clID = 0) & (clentQueue = 1) & (cl1.command = enter) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 1;
+            (d3.clID = 0) & (clentQueue = 2) & (cl2.command = enter) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 2;
+            (d3.clID = 0) & (clentQueue = 3) & (cl3.command = enter) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 3;
+            (d3.clID = 0) & (clentQueue = 4) & (cl4.command = enter) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 4;
+            (d3.clID = 0) & (clentQueue = 5) & (cl5.command = enter) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 5;
+            (d3.clID = 0) & (clentQueue = 6) & (cl6.command = enter) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 6;
+            (d3.clID = 0) & (clentQueue = 7) & (cl7.command = enter) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 7;
+            (d3.clID = 0) & (clentQueue = 8) & (cl8.command = enter) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 8;			
+            (d3.clID = 1) & (clentQueue = 1) & (cl1.command = leave) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d3.clID = 2) & (clentQueue = 2) & (cl2.command = leave) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d3.clID = 3) & (clentQueue = 3) & (cl3.command = leave) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d3.clID = 4) & (clentQueue = 4) & (cl4.command = leave) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d3.clID = 5) & (clentQueue = 5) & (cl5.command = leave) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d3.clID = 6) & (clentQueue = 6) & (cl6.command = leave) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d3.clID = 7) & (clentQueue = 7) & (cl7.command = leave) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d3.clID = 8) & (clentQueue = 8) & (cl8.command = leave) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 0;			
+            TRUE : d3.clID;
+        esac;
+
+   
+    next(d4.clID) :=         --кардиолог
+        case
+            (d4.clID = 0) & (clentQueue = 1) & (cl1.command = enter) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 1;
+            (d4.clID = 0) & (clentQueue = 2) & (cl2.command = enter) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7)  : 2;
+            (d4.clID = 0) & (clentQueue = 3) & (cl3.command = enter) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 3;
+            (d4.clID = 0) & (clentQueue = 4) & (cl4.command = enter) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7)  : 4;
+            (d4.clID = 0) & (clentQueue = 5) & (cl5.command = enter) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 5;
+            (d4.clID = 0) & (clentQueue = 6) & (cl6.command = enter) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7)  : 6;
+            (d4.clID = 0) & (clentQueue = 7) & (cl7.command = enter) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 7;
+            (d4.clID = 0) & (clentQueue = 8) & (cl8.command = enter) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7)  : 8;			
+            (d4.clID = 1) & (clentQueue = 1) & (cl1.command = leave) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d4.clID = 2) & (clentQueue = 2) & (cl2.command = leave) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d4.clID = 3) & (clentQueue = 3) & (cl3.command = leave) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d4.clID = 4) & (clentQueue = 4) & (cl4.command = leave) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d4.clID = 5) & (clentQueue = 5) & (cl5.command = leave) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d4.clID = 6) & (clentQueue = 6) & (cl6.command = leave) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d4.clID = 7) & (clentQueue = 7) & (cl7.command = leave) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d4.clID = 8) & (clentQueue = 8) & (cl8.command = leave) & (testClient > 0) & (ill2ndClient = 0) & !(currentDay = 7) : 0;			
+            TRUE : d3.clID;
+        esac;   
+	
+	next(d5.clID) :=           --офтальмолог
+        case
+            (d5.clID = 0) & (clentQueue = 1) & (cl1.command = enter)& (ill2ndClient = 0) & !(currentDay = 7): 1;
+            (d5.clID = 0) & (clentQueue = 2) & (cl2.command = enter)& (ill2ndClient = 0) & !(currentDay = 7) : 2;
+			(d5.clID = 0) & (clentQueue = 3) & (cl3.command = enter)& (ill2ndClient = 0) & !(currentDay = 7) : 3;
+            (d5.clID = 0) & (clentQueue = 4) & (cl4.command = enter)& (ill2ndClient = 0) & !(currentDay = 7) : 4;
+			(d5.clID = 0) & (clentQueue = 5) & (cl5.command = enter)& (ill2ndClient = 0) & !(currentDay = 7) : 5;
+            (d5.clID = 0) & (clentQueue = 6) & (cl6.command = enter)& (ill2ndClient = 0) & !(currentDay = 7) : 6;
+			(d5.clID = 0) & (clentQueue = 7) & (cl7.command = enter)& (ill2ndClient = 0) & !(currentDay = 7) : 7;
+            (d5.clID = 0) & (clentQueue = 8) & (cl8.command = enter)& (ill2ndClient = 0) & !(currentDay = 7) : 8;
+            (d5.clID = 1) & (clentQueue = 1) & (cl1.command = leave)& (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d5.clID = 2) & (clentQueue = 2) & (cl2.command = leave)& (ill2ndClient = 0) & !(currentDay = 7) : 0;  
+            (d5.clID = 3) & (clentQueue = 3) & (cl3.command = leave)& (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d5.clID = 4) & (clentQueue = 4) & (cl4.command = leave)& (ill2ndClient = 0) & !(currentDay = 7) : 0;   
+            (d5.clID = 5) & (clentQueue = 5) & (cl5.command = leave)& (ill2ndClient = 0) & !(currentDay = 7) : 0;
+            (d5.clID = 6) & (clentQueue = 6) & (cl6.command = leave)& (ill2ndClient = 0) & !(currentDay = 7): 0;   
+            (d5.clID = 7) & (clentQueue = 7) & (cl7.command = leave)& (ill2ndClient = 0)  & !(currentDay = 7): 0;
+            (d5.clID = 8) & (clentQueue = 8) & (cl8.command = leave)& (ill2ndClient = 0) & !(currentDay = 7) : 0;   				  
+            TRUE : d5.clID;
+        esac;
+		
+	next(d6.clID) :=           --стоматолог
+        case
+            (d6.clID = 0) & (clentQueue = 1) & (cl1.command = enter)&  (ill2ndClient = 0) & !(currentDay = 7): 1;
+            (d6.clID = 0) & (clentQueue = 2) & (cl2.command = enter)& (ill2ndClient = 0) & !(currentDay = 7): 2;
+			(d6.clID = 0) & (clentQueue = 3) & (cl3.command = enter)&  (ill2ndClient = 0) & !(currentDay = 7): 3;
+            (d6.clID = 0) & (clentQueue = 4) & (cl4.command = enter)&  (ill2ndClient = 0) & !(currentDay = 7): 4;
+			(d6.clID = 0) & (clentQueue = 5) & (cl5.command = enter)&  (ill2ndClient = 0) & !(currentDay = 7): 5;
+            (d6.clID = 0) & (clentQueue = 6) & (cl6.command = enter)&  (ill2ndClient = 0) & !(currentDay = 7): 6;
+			(d6.clID = 0) & (clentQueue = 7) & (cl7.command = enter)&  (ill2ndClient = 0) & !(currentDay = 7): 7;
+            (d6.clID = 0) & (clentQueue = 8) & (cl8.command = enter)&  (ill2ndClient = 0) & !(currentDay = 7): 8;
+            (d6.clID = 1) & (clentQueue = 1) & (cl1.command = leave)&  (ill2ndClient = 0) & !(currentDay = 7): 0;
+            (d6.clID = 2) & (clentQueue = 2) & (cl2.command = leave)&  (ill2ndClient = 0) & !(currentDay = 7): 0;  
+            (d6.clID = 3) & (clentQueue = 3) & (cl3.command = leave)&  (ill2ndClient = 0) & !(currentDay = 7): 0;
+            (d6.clID = 4) & (clentQueue = 4) & (cl4.command = leave)&  (ill2ndClient = 0) & !(currentDay = 7): 0;   
+            (d6.clID = 5) & (clentQueue = 5) & (cl5.command = leave)&  (ill2ndClient = 0) & !(currentDay = 7): 0;
+            (d6.clID = 6) & (clentQueue = 6) & (cl6.command = leave)&  (ill2ndClient = 0) & !(currentDay = 7): 0;   
+            (d6.clID = 7) & (clentQueue = 7) & (cl7.command = leave)&  (ill2ndClient = 0) & !(currentDay = 7): 0;
+            (d6.clID = 8) & (clentQueue = 8) & (cl8.command = leave)&  (ill2ndClient = 0) & !(currentDay = 7): 0;   				  
+            TRUE : d6.clID;
+        esac;		
+
+    init(clentQueue) := 1;
+    next(clentQueue) :=
+        case
+            clentQueue = 1 : 2;
+			clentQueue = 2 : 3;
+			clentQueue = 3 : 4;
+			clentQueue = 4 : 5;
+			clentQueue = 5 : 6;
+			clentQueue = 6 : 7;
+			clentQueue = 7 : 8;
+            clentQueue = 8 : 1;
+            currentDay = maxDay : clentQueue;
+        esac;
+
+    init(ill2ndClient) := 1;
+    next(ill2ndClient) :=
+        case
+            (((cl1.ref = 0) & (cl1.wasTer = 1)) ? (ill2ndClient + (d1.clID=1 ? (1) : 0)) : 0) > 6: 7;
+            (((cl1.ref = 0) & (cl1.wasTer = 1)) ? (ill2ndClient + (d1.clID=1 ? (1) : 0)) : 7) <= 6: ill2ndClient + (d1.clID=1?(1):0);
+            (((cl2.ref = 0) & (cl2.wasTer = 1)) ? (ill2ndClient + (d1.clID=2 ? (1) : 0)) : 0) > 6: 7;
+            (((cl2.ref = 0) & (cl2.wasTer = 1)) ? (ill2ndClient + (d1.clID=2 ? (1) : 0)) : 7) <= 6: ill2ndClient + (d1.clID=2?(1):0);
+            (((cl3.ref = 0) & (cl3.wasTer = 1)) ? (ill2ndClient + (d1.clID=3 ? (1) : 0)) : 0) > 6: 7;
+            (((cl3.ref = 0) & (cl3.wasTer = 1)) ? (ill2ndClient + (d1.clID=3 ? (1) : 0)) : 7) <= 6: ill2ndClient + (d1.clID=3?(1):0);
+            (((cl4.ref = 0) & (cl4.wasTer = 1)) ? (ill2ndClient + (d1.clID=4 ? (1) : 0)) : 0) > 6: 7;
+            (((cl4.ref = 0) & (cl4.wasTer = 1)) ? (ill2ndClient + (d1.clID=4 ? (1) : 0)) : 7) <= 6: ill2ndClient + (d1.clID=4?(1):0);
+            (((cl5.ref = 0) & (cl5.wasTer = 1)) ? (ill2ndClient + (d1.clID=5 ? (1) : 0)) : 0) > 6: 7;
+            (((cl5.ref = 0) & (cl5.wasTer = 1)) ? (ill2ndClient + (d1.clID=5 ? (1) : 0)) : 7) <= 6: ill2ndClient + (d1.clID=5?(1):0);
+            (((cl6.ref = 0) & (cl6.wasTer = 1)) ? (ill2ndClient + (d1.clID=6 ? (1) : 0)) : 0) > 6: 7;
+            (((cl6.ref = 0) & (cl6.wasTer = 1)) ? (ill2ndClient + (d1.clID=6 ? (1) : 0)) : 7) <= 6: ill2ndClient + (d1.clID=6?(1):0);
+            (((cl7.ref = 0) & (cl7.wasTer = 1)) ? (ill2ndClient + (d1.clID=7 ? (1) : 0)) : 0) > 6: 7;
+            (((cl7.ref = 0) & (cl7.wasTer = 1)) ? (ill2ndClient + (d1.clID=7 ? (1) : 0)) : 7) <= 6: ill2ndClient + (d1.clID=7?(1):0);
+            (((cl8.ref = 0) & (cl8.wasTer = 1)) ? (ill2ndClient + (d1.clID=8 ? (1) : 0)) : 0) > 6: 7;
+            (((cl8.ref = 0) & (cl8.wasTer = 1)) ? (ill2ndClient + (d1.clID=8 ? (1) : 0)) : 7) <= 6: ill2ndClient + (d1.clID=8?(1):0);		
+			TRUE : ill2ndClient;
+        esac;
+
+    init(testClient) := 1;
+    next(testClient) :=
+        case
+            (cl1.tests = 1 ? (testClient + (d1.clID=1 ? (1) : 0)) : 0) > 6: 7;
+            (cl1.tests = 1 ? (testClient + (d1.clID=1 ? (1) : 0)) : 7) <= 6: testClient + (d1.clID=1?(1):0);
+            (cl2.tests = 1 ? (testClient + (d1.clID=2 ? (1) : 0)) : 0) > 6: 7;
+            (cl2.tests = 1 ? (testClient + (d1.clID=2 ? (1) : 0)) : 7) <= 6: testClient + (d1.clID=2?(1):0);
+            (cl3.tests = 1 ? (testClient + (d1.clID=3 ? (1) : 0)) : 0) > 6: 7;
+            (cl3.tests = 1 ? (testClient + (d1.clID=3 ? (1) : 0)) : 7) <= 6: testClient + (d1.clID=3?(1):0);
+            (cl4.tests = 1 ? (testClient + (d1.clID=4 ? (1) : 0)) : 0) > 6: 7;
+            (cl4.tests = 1 ? (testClient + (d1.clID=4 ? (1) : 0)) : 7) <= 6: testClient + (d1.clID=4?(1):0);
+            (cl5.tests = 1 ? (testClient + (d1.clID=5 ? (1) : 0)) : 0) > 6: 7;
+            (cl5.tests = 1 ? (testClient + (d1.clID=5 ? (1) : 0)) : 7) <= 6: testClient + (d1.clID=5?(1):0);
+            (cl6.tests = 1 ? (testClient + (d1.clID=6 ? (1) : 0)) : 0) > 6: 7;
+            (cl6.tests = 1 ? (testClient + (d1.clID=6 ? (1) : 0)) : 7) <= 6: testClient + (d1.clID=6?(1):0);
+            (cl7.tests = 1 ? (testClient + (d1.clID=7 ? (1) : 0)) : 0) > 6: 7;
+            (cl7.tests = 1 ? (testClient + (d1.clID=7 ? (1) : 0)) : 7) <= 6: testClient + (d1.clID=7?(1):0);
+            (cl8.tests = 1 ? (testClient + (d1.clID=8 ? (1) : 0)) : 0) > 6: 7;
+            (cl8.tests = 1 ? (testClient + (d1.clID=8 ? (1) : 0)) : 7) <= 6: testClient + (d1.clID=8?(1):0);	
+			TRUE : testClient;
+        esac;
+
+    init(wasInTer) := 1;
+    next(wasInTer) :=
+        case
+            (cl1.forN = 1 ? (wasInTer + (d1.clID=1 ? (1) : 0)) : 0) > 6: 7;
+            (cl1.forN = 1 ? (wasInTer + (d1.clID=1 ? (1) : 0)) : 7) <= 6: wasInTer + (d1.clID=1?(1):0);
+            (cl2.forN = 1 ? (wasInTer + (d1.clID=2 ? (1) : 0)) : 0) > 6: 7;
+            (cl2.forN = 1 ? (wasInTer + (d1.clID=2 ? (1) : 0)) : 7) <= 6: wasInTer + (d1.clID=2?(1):0);
+            (cl3.forN = 1 ? (wasInTer + (d1.clID=3 ? (1) : 0)) : 0) > 6: 7;
+            (cl3.forN = 1 ? (wasInTer + (d1.clID=3 ? (1) : 0)) : 7) <= 6: wasInTer + (d1.clID=3?(1):0);
+            (cl4.forN = 1 ? (wasInTer + (d1.clID=4 ? (1) : 0)) : 0) > 6: 7;
+            (cl4.forN = 1 ? (wasInTer + (d1.clID=4 ? (1) : 0)) : 7) <= 6: wasInTer + (d1.clID=4?(1):0);
+            (cl5.forN = 1 ? (wasInTer + (d1.clID=5 ? (1) : 0)) : 0) > 6: 7;
+            (cl5.forN = 1 ? (wasInTer + (d1.clID=5 ? (1) : 0)) : 7) <= 6: wasInTer + (d1.clID=5?(1):0);
+            (cl6.forN = 1 ? (wasInTer + (d1.clID=6 ? (1) : 0)) : 0) > 6: 7;
+            (cl6.forN = 1 ? (wasInTer + (d1.clID=6 ? (1) : 0)) : 7) <= 6: wasInTer + (d1.clID=6?(1):0);
+            (cl7.forN = 1 ? (wasInTer + (d1.clID=7 ? (1) : 0)) : 0) > 6: 7;
+            (cl7.forN = 1 ? (wasInTer + (d1.clID=7 ? (1) : 0)) : 7) <= 6: wasInTer + (d1.clID=7?(1):0);
+            (cl8.forN = 1 ? (wasInTer + (d1.clID=8 ? (1) : 0)) : 0) > 6: 7;
+            (cl8.forN = 1 ? (wasInTer + (d1.clID=8 ? (1) : 0)) : 7) <= 6: wasInTer + (d1.clID=8?(1):0);
+			TRUE : wasInTer;			
+        esac;	
+	
+
+-- MAIN
+MODULE main
+DEFINE
+	maxDay := 7;
+VAR
+	day : 0..maxDay+1;
+
+    d1 : doctor(1);
+    d2 : doctor(2);
+    d3 : doctor(3);
+	d4 : doctor(4);
+    d5 : doctor(5);
+    d6 : doctor(6);
+
+    cl1 : client(1);
+    cl2 : client(2);
+	cl3 : client(3);
+    cl4 : client(4);
+	cl5 : client(5);
+    cl6 : client(6);
+	cl7 : client(7);
+    cl8 : client(8);
+	
+
+    hos : hospital( d1, d2, d3, d4, d5, d6, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, day);
+
+ASSIGN
+    init(day) := 1;
+    next(day) :=
+        case
+            (day <= maxDay) : day + 1;
+            TRUE : day;
+        esac;
+
+
+-- SPECIFICATIONS
+
+-- 1. Записаться к врачу невозможно, если достигнуто максимальное количество записи.
+SPEC AG ((d1.clID = 1 & d1.clID = 2 & d1.clID = 3 & d1.clID = 4 & d1.clID = 5 & d1.clID = 6 & d1.clID = 7 & d1.clID = 8) -> !AF (d1.clID = 9))
+SPEC AG ((d2.clID = 1 & d2.clID = 2 & d2.clID = 3 & d2.clID = 4 & d2.clID = 5 & d2.clID = 6 & d2.clID = 7 & d2.clID = 8) -> !AF (d2.clID = 9))
+SPEC AG ((d3.clID = 1 & d3.clID = 2 & d3.clID = 3 & d3.clID = 4 & d3.clID = 5 & d3.clID = 6 & d3.clID = 7 & d3.clID = 8) -> !AF (d3.clID = 9))
+SPEC AG ((d4.clID = 1 & d4.clID = 2 & d4.clID = 3 & d4.clID = 4 & d4.clID = 5 & d4.clID = 6 & d4.clID = 7 & d4.clID = 8) -> !AF (d4.clID = 9))
+SPEC AG ((d5.clID = 1 & d5.clID = 2 & d5.clID = 3 & d5.clID = 4 & d5.clID = 5 & d5.clID = 6 & d5.clID = 7 & d5.clID = 8) -> !AF (d5.clID = 9))
+SPEC AG ((d6.clID = 1 & d6.clID = 2 & d6.clID = 3 & d6.clID = 4 & d6.clID = 5 & d6.clID = 6 & d6.clID = 7 & d6.clID = 8) -> !AF (d6.clID = 9))
+
+-- 2. Если пациент болел орви, то нельзя записываться ко всем врачам без справки, кроме терапевта (к терапевту за получением только справки)
+SPEC AG ((cl1.command = enter & ((cl1.ref = 0) & (cl1.wasTer = 1)) & hos.clentQueue = 1 & d1.clID = 0) -> AF (d1.clID = 1)& (cl1.ref = 1))
+SPEC AG ((cl1.command = enter & ((cl1.ref = 0) & (cl1.wasTer = 1)) & hos.clentQueue = 1 & d2.clID = 0) -> !AF (d2.clID = 1))
+SPEC AG ((cl1.command = enter & ((cl1.ref = 0) & (cl1.wasTer = 1)) & hos.clentQueue = 1 & d3.clID = 0) -> !AF (d3.clID = 1))
+SPEC AG ((cl1.command = enter & ((cl1.ref = 0) & (cl1.wasTer = 1)) & hos.clentQueue = 1 & d4.clID = 0) -> !AF (d4.clID = 1))
+SPEC AG ((cl1.command = enter & ((cl1.ref = 0) & (cl1.wasTer = 1)) & hos.clentQueue = 1 & d5.clID = 0) -> !AF (d5.clID = 1))
+SPEC AG ((cl1.command = enter & ((cl1.ref = 0) & (cl1.wasTer = 1)) & hos.clentQueue = 1 & d6.clID = 0) -> !AF (d6.clID = 1))
+
+--SPEC AG ((cl2.command = enter & ((cl2.ref = 0) & (cl2.wasTer = 1)) & hos.clentQueue = 2 & d1.clID = 0) -> AF (d1.clID = 2)& (cl2.ref = 1))
+--SPEC AG ((cl2.command = enter & ((cl2.ref = 0) & (cl2.wasTer = 1)) & hos.clentQueue = 2 & d2.clID = 0) -> !AF (d2.clID = 2))
+--SPEC AG ((cl2.command = enter & ((cl2.ref = 0) & (cl2.wasTer = 1)) & hos.clentQueue = 2 & d3.clID = 0) -> !AF (d3.clID = 2))
+--SPEC AG ((cl2.command = enter & ((cl2.ref = 0) & (cl2.wasTer = 1)) & hos.clentQueue = 2 & d4.clID = 0) -> !AF (d4.clID = 2))
+--SPEC AG ((cl2.command = enter & ((cl2.ref = 0) & (cl2.wasTer = 1)) & hos.clentQueue = 2 & d5.clID = 0) -> !AF (d5.clID = 2))
+--SPEC AG ((cl2.command = enter & ((cl2.ref = 0) & (cl2.wasTer = 1)) & hos.clentQueue = 2 & d6.clID = 0) -> !AF (d6.clID = 2))
+
+--SPEC AG ((cl3.command = enter & ((cl3.ref = 0) & (cl3.wasTer = 1)) & hos.clentQueue = 3 & d1.clID = 0) -> AF (d1.clID = 3)& (cl3.ref = 1))
+--SPEC AG ((cl3.command = enter & ((cl3.ref = 0) & (cl3.wasTer = 1)) & hos.clentQueue = 3 & d2.clID = 0) -> !AF (d2.clID = 3))
+--SPEC AG ((cl3.command = enter & ((cl3.ref = 0) & (cl3.wasTer = 1)) & hos.clentQueue = 3 & d3.clID = 0) -> !AF (d3.clID = 3))
+--SPEC AG ((cl3.command = enter & ((cl3.ref = 0) & (cl3.wasTer = 1)) & hos.clentQueue = 3 & d4.clID = 0) -> !AF (d4.clID = 3))
+--SPEC AG ((cl3.command = enter & ((cl3.ref = 0) & (cl3.wasTer = 1)) & hos.clentQueue = 3 & d5.clID = 0) -> !AF (d5.clID = 3))
+--SPEC AG ((cl3.command = enter & ((cl3.ref = 0) & (cl3.wasTer = 1)) & hos.clentQueue = 3 & d6.clID = 0) -> !AF (d6.clID = 3))
+
+--SPEC AG ((cl4.command = enter & ((cl4.ref = 0) & (cl4.wasTer = 1)) & hos.clentQueue = 4 & d1.clID = 0) -> AF (d1.clID = 4)& (cl4.ref = 1))
+--SPEC AG ((cl4.command = enter & ((cl4.ref = 0) & (cl4.wasTer = 1)) & hos.clentQueue = 4 & d2.clID = 0) -> !AF (d2.clID =4))
+--SPEC AG ((cl4.command = enter & ((cl4.ref = 0) & (cl4.wasTer = 1)) & hos.clentQueue = 4 & d3.clID = 0) -> !AF (d3.clID = 4))
+--SPEC AG ((cl4.command = enter & ((cl4.ref = 0) & (cl4.wasTer = 1)) & hos.clentQueue = 4 & d4.clID = 0) -> !AF (d4.clID = 4))
+--SPEC AG ((cl4.command = enter & ((cl4.ref = 0) & (cl4.wasTer = 1)) & hos.clentQueue = 4 & d5.clID = 0) -> !AF (d5.clID = 4))
+--SPEC AG ((cl4.command = enter & ((cl4.ref = 0) & (cl4.wasTer = 1)) & hos.clentQueue = 4 & d6.clID = 0) -> !AF (d6.clID = 4))
+
+--SPEC AG ((cl5.command = enter & ((cl5.ref = 0) & (cl5.wasTer = 1)) & hos.clentQueue = 5 & d1.clID = 0) -> AF (d1.clID = 5)& (cl5.ref = 1))
+--SPEC AG ((cl5.command = enter & ((cl5.ref = 0) & (cl5.wasTer = 1)) & hos.clentQueue = 5 & d2.clID = 0) -> !AF (d2.clID = 5))
+--SPEC AG ((cl5.command = enter & ((cl5.ref = 0) & (cl5.wasTer = 1)) & hos.clentQueue = 5 & d3.clID = 0) -> !AF (d3.clID = 5))
+--SPEC AG ((cl5.command = enter & ((cl5.ref = 0) & (cl5.wasTer = 1)) & hos.clentQueue = 5 & d4.clID = 0) -> !AF (d4.clID = 5))
+--SPEC AG ((cl5.command = enter & ((cl5.ref = 0) & (cl5.wasTer = 1)) & hos.clentQueue = 5 & d5.clID = 0) -> !AF (d5.clID = 5))
+--SPEC AG ((cl5.command = enter & ((cl5.ref = 0) & (cl5.wasTer = 1)) & hos.clentQueue = 5 & d6.clID = 0) -> !AF (d6.clID = 5))
+
+--SPEC AG ((cl6.command = enter & ((cl6.ref = 0) & (cl6.wasTer = 1)) & hos.clentQueue = 6 & d1.clID = 0) -> AF (d1.clID = 6)& (cl6.ref = 1))
+--SPEC AG ((cl6.command = enter & ((cl6.ref = 0) & (cl6.wasTer = 1)) & hos.clentQueue = 6 & d2.clID = 0) -> !AF (d2.clID = 6))
+--SPEC AG ((cl6.command = enter & ((cl6.ref = 0) & (cl6.wasTer = 1)) & hos.clentQueue = 6 & d3.clID = 0) -> !AF (d3.clID = 6))
+--SPEC AG ((cl6.command = enter & ((cl6.ref = 0) & (cl6.wasTer = 1)) & hos.clentQueue = 6 & d4.clID = 0) -> !AF (d4.clID = 6))
+--SPEC AG ((cl6.command = enter & ((cl6.ref = 0) & (cl6.wasTer = 1)) & hos.clentQueue = 6 & d5.clID = 0) -> !AF (d5.clID = 6))
+--SPEC AG ((cl6.command = enter & ((cl6.ref = 0) & (cl6.wasTer = 1)) & hos.clentQueue = 6 & d6.clID = 0) -> !AF (d6.clID = 6))
+
+--SPEC AG ((cl7.command = enter & ((cl7.ref = 0) & (cl7.wasTer = 1)) & hos.clentQueue = 7 & d1.clID = 0) -> AF (d1.clID = 7)& (cl7.ref = 1))
+--SPEC AG ((cl7.command = enter & ((cl7.ref = 0) & (cl7.wasTer = 1)) & hos.clentQueue = 7 & d2.clID = 0) -> !AF (d2.clID = 7))
+--SPEC AG ((cl7.command = enter & ((cl7.ref = 0) & (cl7.wasTer = 1)) & hos.clentQueue = 7 & d3.clID = 0) -> !AF (d3.clID = 7))
+--SPEC AG ((cl7.command = enter & ((cl7.ref = 0) & (cl7.wasTer = 1)) & hos.clentQueue = 7 & d4.clID = 0) -> !AF (d4.clID = 7))
+--SPEC AG ((cl7.command = enter & ((cl7.ref = 0) & (cl7.wasTer = 1)) & hos.clentQueue = 7 & d5.clID = 0) -> !AF (d5.clID = 7))
+--SPEC AG ((cl7.command = enter & ((cl7.ref = 0) & (cl7.wasTer = 1)) & hos.clentQueue = 7 & d6.clID = 0) -> !AF (d6.clID = 7))
+
+--SPEC AG ((cl8.command = enter & ((cl8.ref = 0) & (cl8.wasTer = 1)) & hos.clentQueue = 8 & d1.clID = 0) -> AF (d1.clID = 8)& (cl8.ref = 1))
+--SPEC AG ((cl8.command = enter & ((cl8.ref = 0) & (cl8.wasTer = 1)) & hos.clentQueue = 8 & d2.clID = 0) -> !AF (d2.clID = 8))
+--SPEC AG ((cl8.command = enter & ((cl8.ref = 0) & (cl8.wasTer = 1)) & hos.clentQueue = 8 & d3.clID = 0) -> !AF (d3.clID = 8))
+--SPEC AG ((cl8.command = enter & ((cl8.ref = 0) & (cl8.wasTer = 1)) & hos.clentQueue = 8 & d4.clID = 0) -> !AF (d4.clID = 8))
+--SPEC AG ((cl8.command = enter & ((cl8.ref = 0) & (cl8.wasTer = 1)) & hos.clentQueue = 8 & d5.clID = 0) -> !AF (d5.clID = 8))
+--SPEC AG ((cl8.command = enter & ((cl8.ref = 0) & (cl8.wasTer = 1)) & hos.clentQueue = 8 & d6.clID = 0) -> !AF (d6.clID = 8))
+
+--3.Пациент не может записаться к врачу в выходной день
+SPEC AG ((cl1.command = enter) & (day = 7) -> !AF (d1.clID = 1))
+SPEC AG ((cl1.command = enter) & (day = 5) -> !AF (d1.clID = 1))
+SPEC AG ((cl1.command = enter) & (day = 7) -> !AF (d2.clID = 1))
+SPEC AG ((cl1.command = enter) & (day = 7) -> !AF (d3.clID = 1))
+SPEC AG ((cl1.command = enter) & (day = 7) -> !AF (d4.clID = 1))
+SPEC AG ((cl1.command = enter) & (day = 7) -> !AF (d5.clID = 1))
+SPEC AG ((cl1.command = enter) & (day = 7) -> !AF (d6.clID = 1))
+
+--SPEC AG ((cl2.command = enter) & (day = 7) -> !AF (d1.clID = 2))
+--SPEC AG ((cl2.command = enter) & (day = 5) -> !AF (d1.clID = 2))
+--SPEC AG ((cl2.command = enter) & (day = 7) -> !AF (d2.clID = 2))
+--SPEC AG ((cl2.command = enter) & (day = 7) -> !AF (d3.clID = 2))
+--SPEC AG ((cl2.command = enter) & (day = 7) -> !AF (d4.clID = 2))
+--SPEC AG ((cl2.command = enter) & (day = 7) -> !AF (d5.clID = 2))
+--SPEC AG ((cl2.command = enter) & (day = 7) -> !AF (d6.clID = 2))
+
+--SPEC AG ((cl3.command = enter) & (day = 7) -> !AF (d1.clID = 3))
+--SPEC AG ((cl3.command = enter) & (day = 5) -> !AF (d1.clID = 3))
+--SPEC AG ((cl3.command = enter) & (day = 7) -> !AF (d2.clID = 3))
+--SPEC AG ((cl3.command = enter) & (day = 7) -> !AF (d3.clID = 3))
+--SPEC AG ((cl3.command = enter) & (day = 7) -> !AF (d4.clID = 3))
+--SPEC AG ((cl3.command = enter) & (day = 7) -> !AF (d5.clID = 3))
+--SPEC AG ((cl3.command = enter) & (day = 7) -> !AF (d6.clID = 3))
+
+--SPEC AG ((cl4.command = enter) & (day = 7) -> !AF (d1.clID = 4))
+--SPEC AG ((cl4.command = enter) & (day = 5) -> !AF (d1.clID = 4))
+--SPEC AG ((cl4.command = enter) & (day = 7) -> !AF (d2.clID = 4))
+--SPEC AG ((cl4.command = enter) & (day = 7) -> !AF (d3.clID = 4))
+--SPEC AG ((cl4.command = enter) & (day = 7) -> !AF (d4.clID = 4))
+--SPEC AG ((cl4.command = enter) & (day = 7) -> !AF (d5.clID = 4))
+--SPEC AG ((cl4.command = enter) & (day = 7) -> !AF (d6.clID = 4))
+
+--SPEC AG ((cl5.command = enter) & (day = 7) -> !AF (d1.clID = 5))
+--SPEC AG ((cl5.command = enter) & (day = 5) -> !AF (d1.clID = 5))
+--SPEC AG ((cl5.command = enter) & (day = 7) -> !AF (d2.clID = 5))
+--SPEC AG ((cl5.command = enter) & (day = 7) -> !AF (d3.clID = 5))
+--SPEC AG ((cl5.command = enter) & (day = 7) -> !AF (d4.clID = 5))
+--SPEC AG ((cl5.command = enter) & (day = 7) -> !AF (d5.clID = 5))
+--SPEC AG ((cl5.command = enter) & (day = 7) -> !AF (d6.clID = 5))
+
+--SPEC AG ((cl6.command = enter) & (day = 7) -> !AF (d1.clID = 6))
+--SPEC AG ((cl6.command = enter) & (day = 5) -> !AF (d1.clID = 6))
+--SPEC AG ((cl6.command = enter) & (day = 7) -> !AF (d2.clID = 6))
+--SPEC AG ((cl6.command = enter) & (day = 7) -> !AF (d3.clID = 6))
+--SPEC AG ((cl6.command = enter) & (day = 7) -> !AF (d4.clID = 6))
+--SPEC AG ((cl6.command = enter) & (day = 7) -> !AF (d5.clID = 6))
+--SPEC AG ((cl6.command = enter) & (day = 7) -> !AF (d6.clID = 6))
+
+--SPEC AG ((cl7.command = enter) & (day = 7) -> !AF (d1.clID = 7))
+--SPEC AG ((cl7.command = enter) & (day = 5) -> !AF (d1.clID = 7))
+--SPEC AG ((cl7.command = enter) & (day = 7) -> !AF (d2.clID = 7))
+--SPEC AG ((cl7.command = enter) & (day = 7) -> !AF (d3.clID = 7))
+--SPEC AG ((cl7.command = enter) & (day = 7) -> !AF (d4.clID = 7))
+--SPEC AG ((cl7.command = enter) & (day = 7) -> !AF (d5.clID = 7))
+--SPEC AG ((cl7.command = enter) & (day = 7) -> !AF (d6.clID = 7))
+
+--SPEC AG ((cl8.command = enter) & (day = 7) -> !AF (d1.clID = 8))
+--SPEC AG ((cl8.command = enter) & (day = 5) -> !AF (d1.clID = 8))
+--SPEC AG ((cl8.command = enter) & (day = 7) -> !AF (d2.clID = 8))
+--SPEC AG ((cl8.command = enter) & (day = 7) -> !AF (d3.clID = 8))
+--SPEC AG ((cl8.command = enter) & (day = 7) -> !AF (d4.clID = 8))
+--SPEC AG ((cl8.command = enter) & (day = 7) -> !AF (d5.clID = 8))
+--SPEC AG ((cl8.command = enter) & (day = 7) -> !AF (d6.clID = 8))
+
+--4.Если анализы не сделаны, то нельзя попасть к кардиологу, хирургу
+SPEC AG ((cl1.command = enter & ((cl1.tests = 0) ) & hos.clentQueue = 1 & d3.clID = 0) -> !AF (d3.clID = 1))
+SPEC AG ((cl1.command = enter & ((cl1.tests = 0) ) & hos.clentQueue = 1 & d4.clID = 0) -> !AF (d4.clID = 1))
+
+--SPEC AG ((cl2.command = enter & ((cl2.tests = 0) ) & hos.clentQueue = 2 & d3.clID = 0) -> !AF (d3.clID = 2))
+--SPEC AG ((cl2.command = enter & ((cl2.tests = 0) ) & hos.clentQueue = 2 & d4.clID = 0) -> !AF (d4.clID = 2))
+
+--SPEC AG ((cl3.command = enter & ((cl3.tests = 0) ) & hos.clentQueue = 3 & d3.clID = 0) -> !AF (d3.clID = 3))
+--SPEC AG ((cl3.command = enter & ((cl3.tests = 0) ) & hos.clentQueue = 3 & d4.clID = 0) -> !AF (d4.clID = 3))
+
+--SPEC AG ((cl4.command = enter & ((cl4.tests = 0) ) & hos.clentQueue = 4 & d3.clID = 0) -> !AF (d3.clID = 4))
+--SPEC AG ((cl4.command = enter & ((cl4.tests = 0) ) & hos.clentQueue = 4 & d4.clID = 0) -> !AF (d4.clID = 4))
+
+--SPEC AG ((cl5.command = enter & ((cl5.tests = 0) ) & hos.clentQueue = 5 & d3.clID = 0) -> !AF (d3.clID = 5))
+--SPEC AG ((cl5.command = enter & ((cl5.tests = 0) ) & hos.clentQueue = 5 & d4.clID = 0) -> !AF (d4.clID = 5))
+
+--SPEC AG ((cl6.command = enter & ((cl6.tests = 0) ) & hos.clentQueue = 6 & d3.clID = 0) -> !AF (d3.clID = 6))
+--SPEC AG ((cl6.command = enter & ((cl6.tests = 0) ) & hos.clentQueue = 6 & d4.clID = 0) -> !AF (d4.clID = 6))
+
+--SPEC AG ((cl7.command = enter & ((cl7.tests = 0) ) & hos.clentQueue = 7 & d3.clID = 0) -> !AF (d3.clID = 7))
+--SPEC AG ((cl7.command = enter & ((cl7.tests = 0) ) & hos.clentQueue = 7 & d4.clID = 0) -> !AF (d4.clID = 7))
+
+--SPEC AG ((cl8.command = enter & ((cl8.tests = 0) ) & hos.clentQueue = 8 & d3.clID = 0) -> !AF (d3.clID = 8))
+--SPEC AG ((cl8.command = enter & ((cl8.tests = 0) ) & hos.clentQueue = 8 & d4.clID = 0) -> !AF (d4.clID = 8))
+
+--5.Если не был у терапевта, то нельзя попасть к неврологу
+SPEC AG ((cl1.command = enter & ((cl1.forN = 0)) & hos.clentQueue = 1 & d2.clID = 0) -> !AF (d2.clID = 1))
+--SPEC AG ((cl2.command = enter & ((cl2.forN = 0)) & hos.clentQueue = 2 & d2.clID = 0) -> !AF (d2.clID = 2))
+--SPEC AG ((cl3.command = enter & ((cl3.forN = 0)) & hos.clentQueue = 3 & d2.clID = 0) -> !AF (d2.clID = 3))
+--SPEC AG ((cl4.command = enter & ((cl4.forN = 0)) & hos.clentQueue = 4 & d2.clID = 0) -> !AF (d2.clID = 4))
+--SPEC AG ((cl5.command = enter & ((cl5.forN = 0)) & hos.clentQueue = 5 & d2.clID = 0) -> !AF (d2.clID = 5))
+--SPEC AG ((cl6.command = enter & ((cl6.forN = 0)) & hos.clentQueue = 6 & d2.clID = 0) -> !AF (d2.clID = 6))
+--SPEC AG ((cl7.command = enter & ((cl7.forN = 0)) & hos.clentQueue = 7 & d2.clID = 0) -> !AF (d2.clID = 7))
+--SPEC AG ((cl8.command = enter & ((cl8.forN = 0)) & hos.clentQueue = 8 & d2.clID = 0) -> !AF (d2.clID = 8))
